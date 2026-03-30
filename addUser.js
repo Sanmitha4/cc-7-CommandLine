@@ -39,14 +39,12 @@ const optionsValidator = (options) => (val) => {
 const ask = async (question, defaultAnswer = null, validator = null) => {
     return new Promise((resolve) => {
         const prompt = defaultAnswer ? `${question} [${defaultAnswer}]: ` : `${question}: `;
-        
         rl.question(prompt, (answer) => {
             const finalAnswer = answer.trim() || defaultAnswer;
-
             if (validator) {
                 const result = validator(finalAnswer);
                 if (!result.valid) {
-                    console.log(` ${result.message}`); // Styled in red
+                    console.log(` ${result.message}`); 
                     return resolve(ask(question, defaultAnswer, validator));
                 }
             }
@@ -170,6 +168,26 @@ const listExpenses = () => {
     console.table(displayTable);
 };
 
+const clearExpenses = async () => {
+    if (expenses.length === 0) return console.log("\nNo expenses to clear.");
+    const confirm = await ask("Clear ALL expense history and reset friend balances to $0? (yes/no)", "no");
+    if (confirm.toLowerCase() === 'yes') {
+        expenses = [];
+        friends.forEach(f => f.balance = 0);
+        console.log("Expenses cleared and balances reset.");
+    }
+};
+
+const clearFriendList = async () => {
+    if (friends.length === 0) return console.log("\nFriend list is already empty.");
+    const confirm = await ask(" Clear ALL friends? This will also wipe your expense history. (yes/no)", "no");
+    if (confirm.toLowerCase() === 'yes') {
+        friends = [];
+        expenses = [];
+        console.log("All friends and expenses have been deleted.");
+    }
+};
+
 const run = async () => {
     const menu = `
 1. Add Your Info
@@ -177,7 +195,9 @@ const run = async () => {
 3. List Friends
 4. Add Expense
 5. List Expenses
-6. Exit
+6. Clear Expenses
+7. Clear friend list
+8. Exit
 \nChoice`;
 
     const choice = await ask(menu, null, optionsValidator(['1', '2', '3', '4', '5', '6']));
@@ -188,7 +208,9 @@ const run = async () => {
         case '3': listFriends(); break;
         case '4': await addExpense(); break;
         case '5': listExpenses(); break;
-        case '6': 
+        case '6': await clearExpenses(); break;
+        case '7': await clearFriendList();break;
+        case '8': 
             console.log("Exit");
             rl.close(); 
             return;
